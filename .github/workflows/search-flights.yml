@@ -1,0 +1,37 @@
+name: Search Flights
+
+on:
+  push:
+    paths:
+      - trigger.txt
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run flight search
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: node search-flights.js | tee results/latest.txt
+
+      - name: Commit results
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add results/latest.txt
+          git diff --staged --quiet || git commit -m "chore: flight results $(date -u +'%Y-%m-%d %H:%M UTC') [skip ci]"
+          git push
