@@ -26,7 +26,7 @@ jobs:
       - name: Run flight search
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
-        run: node search-flights.js | tee results/latest.txt
+        run: node search-flights.js 2>&1 | tee results/latest.txt
 
       - name: Commit results
         run: |
