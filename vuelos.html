@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vuelos EZE → FCO</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 24px 0 20px;
+    }
+
+    header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+    header p  { font-size: 0.85rem; color: #94a3b8; margin-top: 6px; }
+
+    .badge {
+      display: inline-block;
+      background: #1e3a5f;
+      color: #60a5fa;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      margin-top: 10px;
+    }
+
+    /* Token form */
+    #token-form {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 8px 0 20px;
+    }
+
+    #token-form label {
+      display: block;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    #token-form input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 0.85rem;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    #token-form input:focus { border-color: #60a5fa; }
+
+    #token-form button {
+      width: 100%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #token-form button:active { background: #1d4ed8; }
+
+    /* Spinner */
+    #status { text-align: center; padding: 40px 20px; display: none; }
+
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid #1e3a5f;
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #status p { color: #94a3b8; font-size: 0.9rem; }
+
+    .error-box {
+      background: #450a0a;
+      border: 1px solid #dc2626;
+      border-radius: 12px;
+      padding: 16px;
+      color: #fca5a5;
+      font-size: 0.85rem;
+      margin-top: 16px;
+    }
+
+    /* Results */
+    #results { display: none; }
+
+    .summary {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .summary strong { font-size: 1.1rem; color: #60a5fa; }
+    .summary span { font-size: 0.8rem; color: #94a3b8; display: block; margin-top: 4px; }
+
+    .card {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 3px solid #60a5fa;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .airline { font-weight: 600; font-size: 1rem; color: #fff; }
+    .price   { font-size: 1.15rem; font-weight: 700; color: #34d399; white-space: nowrap; }
+
+    .route {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .time    { font-size: 1.1rem; font-weight: 600; color: #e2e8f0; }
+    .arrow   { color: #60a5fa; font-size: 1.2rem; }
+    .airport { font-size: 0.7rem; color: #64748b; }
+
+    .meta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .pill {
+      background: #0f172a;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+    .pill.nonstop { color: #34d399; }
+    .pill.stops   { color: #fbbf24; }
+
+    .no-results { text-align: center; padding: 40px 20px; color: #64748b; }
+
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: #475569;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✈️ EZE ↔ FCO</h1>
+  <p>Buenos Aires &nbsp;↔&nbsp; Roma</p>
+  <div class="badge">Ida: 8 ago &nbsp;|&nbsp; Vuelta: 28 ago &nbsp;|&nbsp; 1 adulto · Turista</div>
+</header>
+
+<div id="token-form">
+  <label>Token de Apify (no se guarda ni se envía a ningún servidor propio)</label>
+  <input id="token-input" type="password" placeholder="apify_api_…" autocomplete="off">
+  <button onclick="startSearch()">Buscar vuelos</button>
+</div>
+
+<div id="status">
+  <div class="spinner"></div>
+  <p id="status-text">Iniciando búsqueda…</p>
+</div>
+
+<div id="results"></div>
+
+<footer>Powered by Apify · scrapier/google-flights-scraper</footer>
+
+<script>
+const ACTOR = "scrapier~google-flights-scraper";
+const BASE  = "https://api.apify.com/v2";
+
+const INPUT = {
+  departureIATA: "EZE",
+  arrivalIATA:   "FCO",
+  departureDate: "2026-08-08",
+  arrivalDate:   "2026-08-28",
+  adults: 1, children: 0, infants: 0,
+  seatclass: "1",
+  stops: "0",
+  alliances: "ALL", airlines: "ALL",
+  maxPrice: 0,
+  currency: "ARS",
+  hl: "es", gl: "ar",
+  max_pages: 1, maximum: 20,
+  proxyConfiguration: { useApifyProxy: true }
+};
+
+// Auto-fill token from ?token= URL param
+(function() {
+  const p = new URLSearchParams(window.location.search).get("token");
+  if (p) {
+    document.getElementById("token-input").value = p;
+    // Clean token from URL bar without reload
+    history.replaceState(null, "", window.location.pathname);
+  }
+})();
+
+function setStatus(msg) {
+  document.getElementById("status-text").textContent = msg;
+}
+
+function showError(msg) {
+  document.getElementById("status").innerHTML =
+    `<div class="error-box">❌ ${msg}</div>`;
+}
+
+function fmtPrice(p) {
+  if (!p && p !== 0) return "—";
+  return Number(p).toLocaleString("es-AR") + " ARS";
+}
+
+function renderResults(items) {
+  document.getElementById("status").style.display  = "none";
+  const el = document.getElementById("results");
+  el.style.display = "block";
+
+  if (!items.length) {
+    el.innerHTML = `<div class="no-results">No se encontraron vuelos. Probá ampliar las fechas.</div>`;
+    return;
+  }
+
+  const best = items.reduce((a, b) =>
+    (a.price || Infinity) < (b.price || Infinity) ? a : b, items[0]);
+
+  let html = `
+    <div class="summary">
+      <strong>${items.length} vuelos encontrados</strong>
+      <span>Desde ${fmtPrice(best.price)} el más barato</span>
+    </div>
+  `;
+
+  items.forEach((f) => {
+    const airline  = f.airline  || f.Airline  || f.carrier      || "Aerolínea";
+    const price    = fmtPrice(f.price || f.Price);
+    const depTime  = f.departureTime || f.DepartureTime || f.departure_time || "—";
+    const arrTime  = f.arrivalTime   || f.ArrivalTime   || f.arrival_time   || "—";
+    const duration = f.duration  || f.Duration  || f.travelTime  || "—";
+    const stops    = f.stops     || f.Stops     || f.numStops;
+    const stopsLabel = (stops == 0 || stops === "0")
+      ? '<span class="pill nonstop">Sin escala</span>'
+      : `<span class="pill stops">${stops} escala(s)</span>`;
+
+    html += `
+      <div class="card">
+        <div class="card-header">
+          <span class="airline">${airline}</span>
+          <span class="price">${price}</span>
+        </div>
+        <div class="route">
+          <div><div class="time">${depTime}</div><div class="airport">EZE</div></div>
+          <span class="arrow">→</span>
+          <div><div class="time">${arrTime}</div><div class="airport">FCO</div></div>
+        </div>
+        <div class="meta">
+          <span class="pill">⏱ ${duration}</span>
+          ${stopsLabel}
+        </div>
+      </div>
+    `;
+  });
+
+  el.innerHTML = html;
+}
+
+async function poll(token, runId, datasetId) {
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 5000));
+    setStatus(`Buscando vuelos… (${(i + 1) * 5}s)`);
+
+    const r = await fetch(`${BASE}/actor-runs/${runId}?token=${token}`);
+    const { data } = await r.json();
+
+    if (data.status === "SUCCEEDED") {
+      setStatus("Cargando resultados…");
+      const dr = await fetch(
+        `${BASE}/datasets/${datasetId}/items?token=${token}&limit=20`
+      );
+      const items = await dr.json();
+      renderResults(Array.isArray(items) ? items : (items.items || []));
+      return;
+    }
+
+    if (["FAILED", "TIMED-OUT", "ABORTED"].includes(data.status)) {
+      showError(`El actor terminó con estado: ${data.status}`);
+      return;
+    }
+  }
+  showError("Tiempo de espera agotado (5 min). Intentá de nuevo.");
+}
+
+async function startSearch() {
+  const token = document.getElementById("token-input").value.trim();
+  if (!token) { alert("Ingresá tu token de Apify."); return; }
+
+  document.getElementById("token-form").style.display = "none";
+  document.getElementById("status").style.display     = "block";
+  setStatus("Conectando con Apify…");
+
+  try {
+    const res = await fetch(`${BASE}/acts/${ACTOR}/runs?token=${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(INPUT)
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      showError(`Error al iniciar el actor: ${res.status} — ${err}`);
+      return;
+    }
+
+    const { data } = await res.json();
+    setStatus("Buscando vuelos en Google Flights…");
+    await poll(token, data.id, data.defaultDatasetId);
+
+  } catch (e) {
+    showError("Error de red: " + e.message);
+  }
+}
+</script>
+</body>
+</html>
