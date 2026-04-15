@@ -1,0 +1,20 @@
+{
+  "name": "prueba-claude-vuelos-1",
+  "version": "1.0.0",
+  "description": "Google Flights scraper via Apify",
+  "main": "search-flights.js",
+  "type": "module",
+  "scripts": {
+    "search": "node search-flights.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:17127/git/NachoEchenique/Prueba-claude-vuelos-1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apify-client": "^2.23.0"
+  }
+}
