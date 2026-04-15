@@ -3,10 +3,11 @@
  * Google Flights Scraper via Apify
  * Actor: scrapier/google-flights-scraper
  *
+ * Búsqueda: Buenos Aires (EZE) ↔ Roma (FCO)
+ * Ida: sáb 8 ago 2026 | Vuelta: vie 28 ago 2026
+ *
  * Usage:
  *   APIFY_TOKEN=<your_token> node search-flights.js
- *
- * Or set APIFY_TOKEN in a .env file.
  */
 
 import { ApifyClient } from "apify-client";
@@ -28,26 +29,26 @@ const client = new ApifyClient({ token: APIFY_TOKEN });
 // FLIGHT SEARCH CONFIGURATION — edit this object to change the search
 // ---------------------------------------------------------------------------
 const input = {
-  departureIATA: "LAX",   // Origin airport IATA code
-  arrivalIATA: "JFK",     // Destination airport IATA code
-  departureDate: "2026-07-28", // Outbound date (YYYY-MM-DD)
-  departureDateRng: "",   // Optional end of outbound date range
-  arrivalDate: "",        // Return date for round trips (leave empty for one-way)
+  departureIATA: "EZE",   // Buenos Aires - Ezeiza
+  arrivalIATA: "FCO",     // Roma - Fiumicino
+  departureDate: "2026-08-08", // Ida: sábado 8 de agosto
+  departureDateRng: "",
+  arrivalDate: "2026-08-28",   // Vuelta: viernes 28 de agosto
   arrivalDateRng: "",
-  multi_city_json: "",    // Multi-city itinerary (JSON string, leave empty)
+  multi_city_json: "",
   adults: 1,
   children: 0,
   infants: 0,
-  seatclass: "1",         // 1=Economy, 2=Premium Economy, 3=Business, 4=First
-  stops: "0",             // "0"=Any, "1"=Nonstop only, "2"=1 stop max
-  alliances: "ALL",       // "ALL", "STAR_ALLIANCE", "ONEWORLD", "SKYTEAM"
-  airlines: "ALL",        // "ALL" or comma-separated IATA codes e.g. "AA,UA"
-  maxPrice: 0,            // 0 = no price limit
-  currency: "USD",
-  hl: "en",               // Interface language
-  gl: "us",               // Country for results
+  seatclass: "1",         // 1=Economy (Turista)
+  stops: "0",             // "0"=Cualquiera, "1"=Sin escalas, "2"=Máx 1 escala
+  alliances: "ALL",
+  airlines: "ALL",
+  maxPrice: 0,            // 0 = sin límite de precio
+  currency: "ARS",
+  hl: "es",               // Idioma español
+  gl: "ar",               // País: Argentina
   max_pages: 1,
-  maximum: 20,            // Max results per run
+  maximum: 20,
   proxyConfiguration: {
     useApifyProxy: false,
   },
@@ -55,9 +56,12 @@ const input = {
 // ---------------------------------------------------------------------------
 
 async function main() {
+  const tripType = input.arrivalDate ? "ida y vuelta" : "solo ida";
   console.log(
-    `\nSearching flights: ${input.departureIATA} → ${input.arrivalIATA}` +
-      ` on ${input.departureDate} (${input.adults} adult(s))\n`
+    `\nBuscando vuelos [${tripType}]: ${input.departureIATA} ↔ ${input.arrivalIATA}\n` +
+      `  Ida    : ${input.departureDate}\n` +
+      `  Vuelta : ${input.arrivalDate || "—"}\n` +
+      `  Adultos: ${input.adults} | Clase: Turista | Moneda: ${input.currency}\n`
   );
 
   const run = await client.actor("scrapier/google-flights-scraper").call(input);
