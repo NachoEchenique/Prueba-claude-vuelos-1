@@ -1,0 +1,6 @@
+
+Buscando vuelos [ida y vuelta]: EZE ↔ FCO
+  Ida    : 2026-08-08
+  Vuelta : 2026-08-28
+  Adultos: 1 | Clase: Turista | Moneda: ARS
+
